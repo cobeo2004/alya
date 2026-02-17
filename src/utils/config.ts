@@ -18,6 +18,12 @@ export interface Config {
   fileExtensions: string[];
   batchSize: number;
   chunkSize: number;
+  /**
+   * Optional custom instructions appended to the system prompt.
+   * Set via CUSTOM_PROMPT env var. Useful for adding domain-specific rules,
+   * brand names to preserve, tone guidelines, etc.
+   */
+  customPrompt: string;
 }
 
 function getEnvString(key: string, defaultValue?: string): string {
@@ -77,5 +83,6 @@ export function loadConfig(): Config {
     fileExtensions: parseCommaSeparated(fileExtensionsRaw),
     batchSize: getEnvInt('BATCH_SIZE', 5),
     chunkSize: getEnvInt('CHUNK_SIZE', 30),
+    customPrompt: getEnvStringOptional('CUSTOM_PROMPT', ''),
   };
 }

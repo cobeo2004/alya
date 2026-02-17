@@ -1,7 +1,7 @@
 import { generateObject } from 'ai';
 import { z } from 'zod';
-import type { Config } from '../utils/config.js';
 import type { AIProvider } from '../providers/types.js';
+import type { Config } from '../utils/config.js';
 import type { PoEntry, PoFile, TranslationResult } from '../utils/types.js';
 import { chunk, processWithConcurrency } from './concurrency.js';
 import { getUntranslatedEntries, writePoFile } from './po-parser.js';
@@ -24,9 +24,10 @@ interface TranslationChunkResult {
 
 /**
  * Build the system prompt for a given target language.
+ * If customPrompt is provided, it is appended after the default rules.
  */
-function buildSystemPrompt(langName: string): string {
-  return [
+function buildSystemPrompt(langName: string, customPrompt?: string): string {
+  const lines = [
     `You are a professional translator specializing in software UI localization.`,
     `Translate the provided English strings into ${langName}.`,
     ``,
@@ -36,7 +37,13 @@ function buildSystemPrompt(langName: string): string {
     `- Match the tone and brevity of the original (UI labels should stay concise).`,
     `- Return translations in the exact same order as the input.`,
     `- Respond only with the JSON object containing the translations array.`,
-  ].join('\n');
+  ];
+
+  if (customPrompt && customPrompt.trim() !== '') {
+    lines.push(``, `Additional instructions:`, customPrompt.trim());
+  }
+
+  return lines.join('\n');
 }
 
 /**
@@ -48,6 +55,7 @@ async function translateChunk(
   startIndex: number,
   langName: string,
   provider: AIProvider,
+  customPrompt?: string,
 ): Promise<TranslationChunkResult[]> {
   const model = provider.getModel();
 
@@ -68,7 +76,7 @@ async function translateChunk(
   const { object } = await generateObject({
     model,
     schema: translationResponseSchema,
-    system: buildSystemPrompt(langName),
+    system: buildSystemPrompt(langName, customPrompt),
     prompt: userPrompt,
   });
 
@@ -114,7 +122,13 @@ export async function translatePoFile(
     async ({ chunkEntries, chunkIdx }) => {
       const startIndex = chunkIdx * config.chunkSize;
       try {
-        const results = await translateChunk(chunkEntries, startIndex, poFile.langName, provider);
+        const results = await translateChunk(
+          chunkEntries,
+          startIndex,
+          poFile.langName,
+          provider,
+          config.customPrompt,
+        );
 
         for (const result of results) {
           const localIndex = result.index - startIndex;

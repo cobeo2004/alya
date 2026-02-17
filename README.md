@@ -66,6 +66,9 @@ FILE_EXTENSIONS=.po                           # File extensions to match
 # Performance tuning
 BATCH_SIZE=5                                  # Concurrent language workers
 CHUNK_SIZE=30                                 # Strings per API request
+
+# Custom prompt (optional)
+CUSTOM_PROMPT="Use formal language. Do NOT translate the brand name 'Acme'."
 ```
 
 ### Provider Configuration Examples
@@ -145,6 +148,7 @@ For each language:
    - Preserve all placeholders exactly
    - Don't translate brand names
    - Match original tone and brevity
+   - Any additional instructions from `CUSTOM_PROMPT` (appended after the default rules)
 5. Write translations back to the `.po` file
 6. Show progress with per-language spinners
 
@@ -318,6 +322,23 @@ Each provider is a simple factory that wraps the AI SDK and returns a `LanguageM
   - OpenRouter: Multiple models, easy switching, variable pricing
   - OpenAI-compatible: Self-hosted options, no API calls, free (but slower)
 
+## Custom Prompts
+
+You can inject additional instructions into the AI system prompt via the `CUSTOM_PROMPT` environment variable. These are appended after the built-in default rules and apply to every translation chunk across all languages.
+
+```env
+CUSTOM_PROMPT="Use formal/polite language. Do NOT translate the brand name \"Acme\". Prefer shorter words where possible."
+```
+
+Common use cases:
+
+- **Brand name preservation** — list proprietary names the AI must never translate
+- **Tone/formality** — require formal, informal, or domain-specific register (e.g. medical, legal)
+- **Terminology consistency** — enforce specific word choices (e.g. "Shopping Cart" not "Basket")
+- **Character limits** — instruct the AI to keep translations under a certain length for UI constraints
+
+When `CUSTOM_PROMPT` is empty or unset, the default behaviour is unchanged.
+
 ## Supported Languages
 
 | Language              | Code  | Status           |
@@ -356,6 +377,7 @@ Reduce `BATCH_SIZE` and/or `CHUNK_SIZE` to decrease concurrent load.
 ### Translation Quality Issues
 
 - Ensure the system prompt guidelines are being followed (preserve placeholders, etc.)
+- Use `CUSTOM_PROMPT` to add domain-specific rules, enforce tone, or protect brand names
 - Try a different model via OpenRouter
 - Increase `CHUNK_SIZE` for better context (up to 50-100 strings)
 
