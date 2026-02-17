@@ -33,7 +33,6 @@ function buildSystemPrompt(langName: string, customPrompt?: string): string {
     ``,
     `Rules:`,
     `- Preserve ALL placeholders exactly as they appear (e.g., {0}, {1}, {name}, {priceDisplay}).`,
-    `- Do NOT translate brand names: "Unibuz", "Unibazaar".`,
     `- Match the tone and brevity of the original (UI labels should stay concise).`,
     `- Return translations in the exact same order as the input.`,
     `- Respond only with the JSON object containing the translations array.`,
